@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -27,7 +28,7 @@ const (
 	infraCloudConfName = "test-config"
 	infraCloudConfKey  = "foo"
 
-	defaultAzureConfig = `{"cloud":"AzurePublicCloud","tenantId":"0000000-0000-0000-0000-000000000000","subscriptionId":"0000000-0000-0000-0000-000000000000","vmType":"standard","putVMSSVMBatchSize":0,"enableMigrateToIPBasedBackendPoolAPI":false,"clusterServiceLoadBalancerHealthProbeMode":"shared"}`
+	defaultAzureConfig = `{"cloud":"AzurePublicCloud","tenantId":"0000000-0000-0000-0000-000000000000","Entries":null,"subscriptionId":"0000000-0000-0000-0000-000000000000","vmType":"standard","putVMSSVMBatchSize":0,"enableMigrateToIPBasedBackendPoolAPI":false,"clusterServiceLoadBalancerHealthProbeMode":"shared"}`
 )
 
 func makeInfrastructureResource(platform configv1.PlatformType) *configv1.Infrastructure {
@@ -279,12 +280,13 @@ var _ = Describe("Cloud config sync controller", func() {
 			syncedCloudConfigMap := &corev1.ConfigMap{}
 			err := cl.Get(ctx, syncedConfigMapKey, syncedCloudConfigMap)
 			g.Expect(err).NotTo(HaveOccurred())
+			fmt.Printf("\n\nsynced data: \n%s\n", syncedCloudConfigMap.Data[defaultConfigKey])
 			return syncedCloudConfigMap.Data[defaultConfigKey]
 		}).Should(Equal(defaultAzureConfig))
 	})
 
 	It("config should be synced up if managed cloud config changed", func() {
-		changedConfigString := `{"cloud":"AzurePublicCloud","tenantId":"0000000-1234-1234-0000-000000000000","subscriptionId":"0000000-0000-0000-0000-000000000000","vmType":"standard","putVMSSVMBatchSize":0,"enableMigrateToIPBasedBackendPoolAPI":false,"clusterServiceLoadBalancerHealthProbeMode":"shared"}`
+		changedConfigString := `{"cloud":"AzurePublicCloud","tenantId":"0000000-1234-1234-0000-000000000000","Entries":null,"subscriptionId":"0000000-0000-0000-0000-000000000000","vmType":"standard","putVMSSVMBatchSize":0,"enableMigrateToIPBasedBackendPoolAPI":false,"clusterServiceLoadBalancerHealthProbeMode":"shared"}`
 		changedManagedConfig := managedCloudConfig.DeepCopy()
 		changedManagedConfig.Data = map[string]string{"cloud.conf": changedConfigString}
 		Expect(cl.Update(ctx, changedManagedConfig)).To(Succeed())
@@ -339,7 +341,7 @@ var _ = Describe("Cloud config sync controller", func() {
 		Expect(cl.Delete(ctx, managedCloudConfig)).Should(Succeed())
 		managedCloudConfig = nil
 
-		changedInfraConfigString := `{"cloud":"AzurePublicCloud","tenantId":"0000000-1234-1234-0000-000000000000","subscriptionId":"0000000-0000-0000-0000-000000000000","vmType":"standard","putVMSSVMBatchSize":0,"enableMigrateToIPBasedBackendPoolAPI":false,"clusterServiceLoadBalancerHealthProbeMode":"shared"}`
+		changedInfraConfigString := `{"cloud":"AzurePublicCloud","tenantId":"0000000-1234-1234-0000-000000000000","Entries":null,"subscriptionId":"0000000-0000-0000-0000-000000000000","vmType":"standard","putVMSSVMBatchSize":0,"enableMigrateToIPBasedBackendPoolAPI":false,"clusterServiceLoadBalancerHealthProbeMode":"shared"}`
 		changedInfraConfig := infraCloudConfig.DeepCopy()
 		changedInfraConfig.Data = map[string]string{infraCloudConfKey: changedInfraConfigString}
 		Expect(cl.Update(ctx, changedInfraConfig)).Should(Succeed())
